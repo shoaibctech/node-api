@@ -2,6 +2,7 @@ const express = require('express');
 const logger = require('morgan');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const fileUpload = require('express-fileupload');
 
 require('dotenv').config()
 
@@ -10,6 +11,8 @@ const PORT = process.env.PORT || 8080;
 
 app.use(logger('dev'));
 app.use(bodyParser.urlencoded({limit: '50mb', extended: true }));
+app.use(bodyParser.json({limit: '50mb'}));
+app.use(fileUpload({}));
 
 
 app.use(cors());
