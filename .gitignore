@@ -1,2 +1,8 @@
 node_modules
-.DS_STORE
+.idea
+.env
+.envprod
+.DS_Store
+.env
+app/.DS_Store
+.env

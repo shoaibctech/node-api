@@ -1,7 +1,6 @@
-
-const User = require('./user');
+const Statement = require('./statement');
 
 
 module.exports = (app) => {
-    User(app);
+    Statement(app);
 };
