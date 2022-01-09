@@ -1,10 +1,8 @@
 const path = require('path');
 
-uploadFile = async (file) => {
+uploadFile = async (file, filePath) => {
 
-    let fileName = file.name;
-
-    let uploadPath = path.join(`/Users/macbook/lucie/${fileName}`);
+    let uploadPath = path.join(filePath);
 
     await file.mv(uploadPath, function (err) {
         if (err)

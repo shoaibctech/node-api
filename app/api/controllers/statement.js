@@ -14,38 +14,50 @@ module.exports = {
     upload: async (req, res, next) => {
         try {
 
-            await uploadFile(req.files.file);
+            let bankName = req.body.bankName;
+            let statementFileName = req.files.file.name;
+            let statementFile = req.files.file;
+            let path = `C:/Users/Administrator/Downloads/`;
 
-            const command1 = 'sr_api_call.exe --ip 127.0.0.1 --port 503 --version';
-            const command = `sr_api_call.exe --ip 127.0.0.1 --port 503 --ocrflag 0 --upath Statement_2021_12.pdf --rtemplate UK::Lloyds --opath test.csv`;
+            await uploadFile(statementFile, `${path}${statementFileName}`);
 
-            const result = await runCommand(command1);
+            // const command1 = 'sr_api_call.exe --ip 127.0.0.1 --port 503 --version';
+            const command = `sr_api_call.exe --ip 127.0.0.1 --port 503 --ocrflag 0 --upath ${statementFileName} --rtemplate UK::${bankName} --opath statement.csv`;
+
+            const result = await runCommand(command);
             console.log("_result", result);
 
-            let filePath = path.join(`/Users/macbook/lucie/Application 00001 transactions.csv`)
-
-            const coolPath = path.join(__dirname, '../../../Application 00001 transactions.csv');
             let form = new FormData();
-            let newFile = fs.createReadStream(coolPath);
+            let csvStatement = fs.createReadStream(`${path}statement.csv`);
 
-            form.append('file', newFile, 'file.csv');
-            const data = await axios.post('http://localhost:4000/api/file/upload', form, {
+            console.log("DDDDDDD");
+            form.append('statement', csvStatement, 'statement.csv');
+            const data = await axios.post(
+                'https://dev-api-clearstake.herokuapp.com/api/statement/read', form, {
                 headers: form.getHeaders(),
             });
+            
+            await deleteFile(`${path}${statementFileName}`);
+            // await deleteFile(`${path}statement.csv`);
 
-            await deleteFile(coolPath);
-
-            res.status(200).send({message: true});
+            res.status(200).send({message: true, trans: data.data});
         } catch (e) {
             next(e);
         }
     },
+    test: async (req, res) => {
+        let statementFileName = req.files.file.name;
+        let statementFile = req.files.file;
+        res.status(200).send({message: statementFileName})
+    }
 
 }
 
 runCommand = async (command) => {
     console.log("[[]]][][][][][[]", parentDir);
-    const {stdout, stderr, error} = await exec(command);
+    const {stdout, stderr, error} = await exec(command, {
+        cwd: parentDir
+    },);
     if (stderr) {
         console.error('stderr:', stderr);
     }
