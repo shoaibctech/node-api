@@ -26,6 +26,12 @@ module.exports = {
 
             const result = await runCommand(command);
             console.log("_result", result);
+            
+            let accuracy = parseInt(result.match(new RegExp("accuracy" + '\\s(\\w+)'))[1]);
+
+            console.log("{}{}{}}{}{}", accuracy, typeof(accuracy));
+
+            if (accuracy >= 70) {
 
             let form = new FormData();
             let csvStatement = fs.createReadStream(`${path}statement.csv`);
@@ -41,6 +47,11 @@ module.exports = {
             // await deleteFile(`${path}statement.csv`);
 
             res.status(200).send({message: true, trans: data.data});
+
+            } else {
+                res.status(400).send({success: false, message: "Result is not accurate enough"})
+            }
+
         } catch (e) {
             next(e);
         }
@@ -54,7 +65,6 @@ module.exports = {
 }
 
 runCommand = async (command) => {
-    console.log("[[]]][][][][][[]", parentDir);
     const {stdout, stderr, error} = await exec(command, {
         cwd: parentDir
     },);
