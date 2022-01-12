@@ -13,6 +13,14 @@ const queue = new bull("ocrQueue", opts);
 
 queue.process(statementProcess);
 
+queue.on("completed", (job, result) => {
+  console.log("////////////", job.data, result);
+});
+
+queue.on("failed", (job, error) => {
+  console.log("||||||||||||||||", job.data, error);
+});
+
 const createJob = async (
   statementFile,
   statementFileName,

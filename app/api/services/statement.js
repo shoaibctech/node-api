@@ -9,13 +9,14 @@ const fsPromises = require("fs/promises");
 
 let parentDir = path.resolve(process.cwd(), "..");
 
-statementProcess = async (job) => {
-  const { statementFile, statementFileName, csvFileName, bankName, path } = job;
+statementProcess = async (job, done) => {
+  const { statementFile, statementFileName, csvFileName, bankName, path } = job.data;
   try {
-    // await uploadFile(statementFile, `${path}${statementFileName}`);
+    
+    await uploadFile(statementFile, `${path}${statementFileName}`);
 
     // const command1 = 'sr_api_call.exe --ip 127.0.0.1 --port 503 --version';
-    const command = `sr_api_call.exe --ip 127.0.0.1 --port 503 --ocrflag 0 --upath Statement_2021_12.pdf --rtemplate UK::${bankName} --opath ${csvFileName}`;
+    const command = `sr_api_call.exe --ip 127.0.0.1 --port 503 --ocrflag 0 --upath ${statementFileName} --rtemplate UK::${bankName} --opath statement.csv`;
 
     const result = await runCommand(command);
     console.log("_result", result);
@@ -24,15 +25,13 @@ statementProcess = async (job) => {
       result.match(new RegExp("accuracy" + "\\s(\\w+)"))[1]
     );
 
-    console.log("{}{}{}}{}{}", accuracy, typeof accuracy);
-
     if (accuracy >= 70) {
       let form = new FormData();
       let csvStatement = fs.createReadStream(`${path}${csvFileName}`);
 
       console.log("DDDDDDD");
       form.append("statement", csvStatement, "statement.csv");
-      return await axios.post(
+      const resilt = await axios.post(
         "https://dev-api-clearstake.herokuapp.com/api/statement/read",
         form,
         {
@@ -40,13 +39,21 @@ statementProcess = async (job) => {
         }
       );
 
+      done(null, {
+        status: "successful",
+        statusCode: 200,
+        resultMessage: "PDF successfully processed"
+       });
+
       // await deleteFile(`${path}${statementFileName}`);
       // await deleteFile(`${path}statement.csv`);
 
       // res.status(200).send({message: true, trans: data.data});
+    } else {
+      throw Error ('Result is not accurate enough'); 
     }
-  } catch (err) {
-    throw err;
+  } catch (error) {
+    done(error);
   }
 };
 
