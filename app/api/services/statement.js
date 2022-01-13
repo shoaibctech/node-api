@@ -37,16 +37,15 @@ statementProcess = async (job, done) => {
       form.append("statement", csvStatement, `statement${index}.csv`);
     }
 
-    console.log("&&&&&&&&&&&&&& after loop")
     //
     // if (accuracy >= 70) {
-    //   const result = await axios.post(
-    //     "https://dev-api-clearstake.herokuapp.com/api/statement/read",
-    //     form,
-    //     {
-    //       headers: form.getHeaders(),
-    //     }
-    //   );
+      const result = await axios.post(
+        "https://dev-api-clearstake.herokuapp.com/api/statement/read",
+        form,
+        {
+          headers: form.getHeaders(),
+        }
+      );
 
       done(null, {
         status: "successful",
@@ -67,18 +66,19 @@ statementProcess = async (job, done) => {
 };
 
 runCommand = async (command) => {
-  const { stdout, stderr, error } = await exec(command, {
-    cwd: parentDir,
-  });
-  if (stderr) {
-    console.error("stderr:", stderr);
-    throw stderr;
-  }
-  if (error) {
-    console.error("error:", error);
-    throw error;
-  }
-  return stdout;
+  console.log("pppppppp", command)
+  // const { stdout, stderr, error } = await exec(command, {
+  //   cwd: parentDir,
+  // });
+  // if (stderr) {
+  //   console.error("stderr:", stderr);
+  //   throw stderr;
+  // }
+  // if (error) {
+  //   console.error("error:", error);
+  //   throw error;
+  // }
+  // return stdout;
 };
 
 deleteFile = async (filePath) => {
