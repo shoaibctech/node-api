@@ -8,36 +8,45 @@ const axios = require("axios");
 const fsPromises = require("fs/promises");
 
 let parentDir = path.resolve(process.cwd(), "..");
+let dirPath = `C:/Users/Administrator/Downloads/`;
 
 statementProcess = async (job, done) => {
-  const { statementFile, statementFileName, csvFileName, bankName, path } = job.data;
+  const { statementFile, csvFileName, bankName } = job.data;
   try {
-    
-    await uploadFile(statementFile, `${path}${statementFileName}`);
 
-    // const command1 = 'sr_api_call.exe --ip 127.0.0.1 --port 503 --version';
-    const command = `sr_api_call.exe --ip 127.0.0.1 --port 503 --ocrflag 0 --upath ${statementFileName} --rtemplate UK::${bankName} --opath statement.csv`;
+    for (let index = 0; index < statementFile.length; index++) {
+      let statementFileName = statementFile[index].name;
 
-    const result = await runCommand(command);
-    console.log("_result", result);
+      await uploadFile(statementFile[index], `${dirPath}${statementFileName}`);
 
-    let accuracy = parseInt(
-      result.match(new RegExp("accuracy" + "\\s(\\w+)"))[1]
-    );
+      // const command1 = 'sr_api_call.exe --ip 127.0.0.1 --port 503 --version';
+      const command = `sr_api_call.exe --ip 127.0.0.1 --port 503 --ocrflag 0 --upath ${statementFileName} --rtemplate UK::${bankName} --opath statement.csv`;
 
-    if (accuracy >= 70) {
-      let form = new FormData();
-      let csvStatement = fs.createReadStream(`${path}${csvFileName}`);
+      const result = await runCommand(command);
+      console.log("_result", result);
 
-      console.log("DDDDDDD");
-      form.append("statement", csvStatement, "statement.csv");
-      const resilt = await axios.post(
-        "https://dev-api-clearstake.herokuapp.com/api/statement/read",
-        form,
-        {
-          headers: form.getHeaders(),
-        }
+      let accuracy = parseInt(
+          result.match(new RegExp("accuracy" + "\\s(\\w+)"))[1]
       );
+
+      console.log("ACCURACY = ", accuracy);
+
+      let form = new FormData();
+      let csvStatement = fs.createReadStream(`${dirPath}statement.csv`);
+
+      form.append("statement", csvStatement, `statement${index}.csv`);
+    }
+
+    console.log("&&&&&&&&&&&&&& after loop")
+    //
+    // if (accuracy >= 70) {
+    //   const result = await axios.post(
+    //     "https://dev-api-clearstake.herokuapp.com/api/statement/read",
+    //     form,
+    //     {
+    //       headers: form.getHeaders(),
+    //     }
+    //   );
 
       done(null, {
         status: "successful",
@@ -45,13 +54,13 @@ statementProcess = async (job, done) => {
         resultMessage: "PDF successfully processed"
        });
 
-      // await deleteFile(`${path}${statementFileName}`);
-      // await deleteFile(`${path}statement.csv`);
+      // await deleteFile(`${dirPath}${statementFileName}`);
+      // await deleteFile(`${dirPath}statement.csv`);
 
       // res.status(200).send({message: true, trans: data.data});
-    } else {
-      throw Error ('Result is not accurate enough'); 
-    }
+    // } else {
+    //   throw Error ('Result is not accurate enough');
+    // }
   } catch (error) {
     done(error);
   }

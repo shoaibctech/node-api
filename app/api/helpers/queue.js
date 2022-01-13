@@ -14,26 +14,22 @@ const queue = new bull("ocrQueue", opts);
 queue.process(statementProcess);
 
 queue.on("completed", (job, result) => {
-  console.log("////////////", job.data, result);
+  // implement pusher
 });
 
 queue.on("failed", (job, error) => {
-  console.log("||||||||||||||||", job.data, error);
+  // implement pusher
 });
 
 const createJob = async (
-  statementFile,
-  statementFileName,
-  csvFileName,
-  bankName,
-  path
+    statementFile,
+    csvFileName,
+    bankName,
 ) => {
   await queue.add({
     statementFile,
-    statementFileName,
     csvFileName,
     bankName,
-    path,
   });
 };
 
