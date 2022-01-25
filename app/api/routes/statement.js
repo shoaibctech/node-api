@@ -1,5 +1,5 @@
-const StatementController = require('../controllers/statement');
+const StatementController = require("../controllers/statement");
 
 module.exports = (app) => {
-    app.post('/api/uploadStatement', StatementController.upload);
+  app.post("/api/uploadStatement", StatementController.upload);
 };

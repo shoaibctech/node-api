@@ -1,6 +1,5 @@
-const Statement = require('./statement');
-
+const Statement = require("./statement");
 
 module.exports = (app) => {
-    Statement(app);
+  Statement(app);
 };
