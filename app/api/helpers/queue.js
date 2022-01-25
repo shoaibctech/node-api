@@ -24,24 +24,24 @@ queue.process(statementProcess);
 
 queue.on("completed", async (job, result) => {
   // implement pusher
-  // await pusher.trigger("affordability-channel", "qr-scan-event-complete", {
-  //   token: result.token,
-  //   userId: result.userId,
-  //   status: result.status,
-  //   statusCode: result.statusCode,
-  //   resultMessage: result.resultMessage,
-  // });
+  await pusher.trigger("affordability-channel", "qr-scan-event-complete", {
+    status: result.status,
+    statusCode: result.statusCode,
+    resultMessage: result.resultMessage,
+    token: result.token,
+    userId: result.userId,
+  });
 });
 
 queue.on("failed", async (job, error) => {
   // implement pusher
-  // await pusher.trigger("affordability-channel", "qr-scan-event-complete", {
-  //   status: error.status,
-  //   statusCode: error.statusCode,
-  //   resultMessage: error.resultMessage,
-  //   token: error.token,
-  //   userId: error.userId,
-  // });
+  await pusher.trigger("affordability-channel", "qr-scan-event-complete", {
+    status: error.status,
+    statusCode: error.statusCode,
+    resultMessage: error.resultMessage,
+    token: error.token,
+    userId: error.userId,
+  });
 });
 
 const createJob = async (
