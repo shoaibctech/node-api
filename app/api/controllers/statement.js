@@ -11,7 +11,6 @@ module.exports = {
       const token = req.body.token;
       const bankName = req.body.bankName;
       let statementFile = req.files.file;
-      let csvFileName = req.body.csvFileName;
       let statementFileNames = [];
       let randomString;
 
@@ -35,7 +34,7 @@ module.exports = {
         statementFileNames.push(statementFileName);
       }
 
-      await createJob(statementFileNames, csvFileName, bankName, userId, token);
+      await createJob(statementFileNames, bankName, userId, token);
 
       res.status(200).send({ message: true, trans: "data.data" });
     } catch (e) {

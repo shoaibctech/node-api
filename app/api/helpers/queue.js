@@ -46,14 +46,12 @@ queue.on("failed", async (job, error) => {
 
 const createJob = async (
   statementFileNames,
-  csvFileName,
   bankName,
   userId,
   token
 ) => {
   await queue.add({
     statementFileNames,
-    csvFileName,
     bankName,
     userId,
     token,

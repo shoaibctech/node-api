@@ -22,7 +22,7 @@ let pusher = new Pusher({
 });
 
 statementProcess = async (job, done) => {
-  const { statementFileNames, csvFileName, bankName, userId, token } = job.data;
+  const { statementFileNames, bankName, userId, token } = job.data;
   try {
     for (let index = 0; index < statementFileNames.length; index++) {
       await pusher.trigger("affordability-channel", "processing_statement", {
