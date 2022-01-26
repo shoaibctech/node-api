@@ -36,11 +36,11 @@ queue.on("completed", async (job, result) => {
 queue.on("failed", async (job, error) => {
   // implement pusher
   await pusher.trigger("affordability-channel", "qr-scan-event-complete", {
-    status: error.status,
-    statusCode: error.statusCode,
-    resultMessage: error.resultMessage,
-    token: error.token,
-    userId: error.userId,
+    status: "Failed",
+    statusCode: 400,
+    resultMessage: "Result is not accurate enough",
+    token: job.data.token,
+    userId: job.data.userId,
   });
 });
 
