@@ -47,7 +47,9 @@ statementProcess = async (job, done) => {
         result.match(new RegExp("accuracy" + "\\s(\\w+)"))[1]
       );
 
-      if (accuracy < 90) {
+      let error = result.includes("error");
+
+      if (accuracy < 90 || error) {
         done({
           status: "Failed",
           statusCode: 400,
