@@ -68,6 +68,9 @@ statementProcess = async (job, done) => {
       await deleteFile(`${dirPath}${statementFileName}`);
     }
 
+    form.append("token", token);
+    form.append("userId", userId);
+
     const result = await axios.post(
       "https://dev-api-clearstake.herokuapp.com/api/statement/read",
       form,
