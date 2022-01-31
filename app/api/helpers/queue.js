@@ -35,7 +35,7 @@ queue.on("completed", async (job, result) => {
 
 queue.on("failed", async (job, error) => {
   // implement pusher
-  await pusher.trigger("affordability-channel", "qr-scan-event-complete", {
+  await pusher.trigger("affordability-channel", "ocr-scan-event-complete", {
     status: "Failed",
     statusCode: 400,
     resultMessage: "Result is not accurate enough",
