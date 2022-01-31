@@ -24,7 +24,7 @@ queue.process(statementProcess);
 
 queue.on("completed", async (job, result) => {
   // implement pusher
-  await pusher.trigger("affordability-channel", "qr-scan-event-complete", {
+  await pusher.trigger("affordability-channel", "ocr-scan-event-complete", {
     status: result.status,
     statusCode: result.statusCode,
     resultMessage: result.resultMessage,
