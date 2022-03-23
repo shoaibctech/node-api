@@ -24,23 +24,24 @@ queue.process(statementProcess);
 
 queue.on("completed", async (job, result) => {
   // implement pusher
-  await pusher.trigger("affordability-channel", "ocr-scan-event-complete", {
-    status: result.status,
-    statusCode: result.statusCode,
-    resultMessage: result.resultMessage,
-    token: result.token,
-    userId: result.userId,
+  await pusher.trigger("affordability-channel", "processing-statement-complete", {
+    status: "success",
+    statusCode: result?.code || "good",
+    message: result?.message || "Completed",
+    token: job.data.token,
+    userId: job.data.userId,
   });
 });
 
 queue.on("failed", async (job, error) => {
   // implement pusher
-  await pusher.trigger("affordability-channel", "ocr-scan-event-complete", {
-    status: "Failed",
-    statusCode: 400,
-    resultMessage: "Result is not accurate enough",
+  await pusher.trigger("affordability-channel", "processing-statement-complete", {
+    status: "failed",
+    statusCode: error?.code || "server-error",
+    message: error?.message || "Something went wrong!",
     token: job.data.token,
     userId: job.data.userId,
+    fileIndex: error?.fileIndex || -1
   });
 });
 
