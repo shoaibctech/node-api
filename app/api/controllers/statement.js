@@ -9,7 +9,7 @@ module.exports = {
     try {
       const userId = req.body.userId;
       const token = req.body.token;
-      const bankName = req.body.bankName;
+      const bank = JSON.parse(req.body.bank);
       let statementFile = req.files.file;
       let statementFileNames = [];
       let randomString;
@@ -34,7 +34,7 @@ module.exports = {
         statementFileNames.push(statementFileName);
       }
 
-      await createJob(statementFileNames, bankName, userId, token);
+      await createJob(statementFileNames, bank, userId, token);
 
       res.status(200).send({ message: true, trans: "data.data" });
     } catch (e) {

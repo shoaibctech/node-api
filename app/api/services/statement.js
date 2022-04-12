@@ -1,32 +1,36 @@
 const util = require("util");
+const moment = require("moment");
 const exec = util.promisify(require("child_process").exec);
 const path = require("path");
 let fs = require("fs");
 let FormData = require("form-data");
 const { uploadFile } = require("../helpers/statement");
-const { notifyFileStatus } = require('./pusher');
+const { notifyFileStatus, pusher, notifyStatus } = require('./pusher');
 const axios = require("axios");
 const fsPromises = require("fs/promises");
 
 let parentDir = path.resolve(process.cwd(), "..");
 let dirPath = `C:/Users/Administrator/Downloads/`;
 // let dirPath = `/Users/macbook/lucie/`;
-const Pusher = require("pusher");
 
-let pusher = new Pusher({
-  appId: "1101809",
-  key: "ac404fe517d1f318787a",
-  secret: "f46ee64d56269e3cb8fb",
-  cluster: "ap2",
-  useTLS: true,
-});
+const getFromText = (text, name) => {
+  let line = text.split('\n')
+    .filter(l => l.startsWith(name))
+  line = line[0] ? line[0] : null;
+
+  if(!line) return;
+
+  return line.split("=")[1].trim();
+}
 
 statementProcess = async (job, done) => {
-  const { statementFileNames, bankName, userId, token } = job.data;
+  const { statementFileNames, bank, userId, token } = job.data;
+  const templateName = bank['SRKey'] || bank['name'];
+  const dates = [];
   try {
     let form = new FormData();
     for (let index = 0; index < statementFileNames.length; index++) {
-      await notifyFileStatus("processing", index, job.data);
+      await notifyFileStatus("processing", index, job);
 
       let statementFileName = statementFileNames[index];
 
@@ -35,7 +39,7 @@ statementProcess = async (job, done) => {
       // await uploadFile(statementFile[index], `${dirPath}${statementFileName}`);
 
       // const command1 = 'sr_api_call.exe --ip 127.0.0.1 --port 503 --version';
-      const command = `sr_api_call.exe --ip 127.0.0.1 --port 503 --ocrflag 0 --upath ${statementFileName} --rtemplate UK::${bankName} --opath ${fileNameWithOutExtension}.csv`;
+      const command = `sr_api_call.exe --ip 127.0.0.1 --port 503 --ocrflag 0 --upath ${statementFileName} --rtemplate UK::${templateName} --opath ${fileNameWithOutExtension}.csv`;
 
       const result = await runCommand(command);
       console.log("_result", result);
@@ -55,15 +59,28 @@ statementProcess = async (job, done) => {
       // }
 
       const text = await fsPromises.readFile(dirPath + fileNameWithOutExtension + '.txt', 'utf8');
-      const dates = text.split('\n')
-        .filter(l => l.startsWith("pdf_CreationDate") || l.startsWith("pdf_ModDate"))
-        .map(l => l.split("=")[1].trim());
+      
+      const createDate = getFromText(text, "pdf_CreationDate");
+      const modDate = getFromText(text, "pdf_ModDate");
 
-      if(dates[0] && dates[1] && (dates[0] !== dates[1])) {
-        done({
-          code: "wrong-dates"
+      if((createDate && modDate) && (createDate !== modDate)) {
+        return done({
+          code: "wrong-dates",
+          fileIndex: index
         });
       }
+
+      const firstDate = getFromText(text, "First_date");
+      const lastDate = getFromText(text, "Last_date");
+      
+      if(firstDate && lastDate) {
+        dates.push({
+          firstDate: moment(firstDate),
+          lastDate: moment(lastDate)
+        })
+      }
+
+      console.log(createDate, modDate);
 
       let csvStatement = fs.createReadStream(
         `${dirPath}${fileNameWithOutExtension}.csv`
@@ -73,29 +90,55 @@ statementProcess = async (job, done) => {
 
       await deleteFile(`${dirPath}${statementFileName}`);
 
-      await notifyFileStatus("completed", index, job.data);
+      await notifyFileStatus("completed", index, job);
     }
+
+    // after loop validations
+    let numberOfMonths = 0;
+    dates.forEach(({firstDate, lastDate}) => {
+      const diff = lastDate.diff(firstDate, "months");
+      // also count if statement is of multiple months
+      numberOfMonths += diff === 0 ? 1 : diff;
+    })
+    if(numberOfMonths < 3) {
+      notifyStatus({
+        status: "incomplete-statement",
+        message: "Statement(s) doesn't contain data for minimum three months"
+      }, job);
+
+      // TODO: use this one in prod
+      // return done({
+      //   code: "not-complete",
+      //   message: "Files doesn't contain data for minimum three months"
+      // });
+    }
+
+    console.log(numberOfMonths);
 
     form.append("token", token);
     form.append("userId", userId);
+    form.append("bank", JSON.stringify(bank));
 
-    const result = await axios.post(
-      "http://a7d4-39-52-247-167.ngrok.io/api/statement/read",
-      form,
-      {
-        headers: form.getHeaders(),
-      }
-    );
-
-    console.log(result.data);
-
-    done();
+    try {
+      const result = await axios.post(
+        "https://beta-api.clearstake.com/api/statement/read",
+        form,
+        {
+          headers: form.getHeaders(),
+        }
+      );
+      console.log(result.data);
+      done();
+    } catch (error) {
+      console.log("error posting statement info", error);
+      return done({
+        code: "posting-failed"
+      });
+    }
 
     // await deleteFile(`${dirPath}statement.csv`);
-
-    // res.status(200).send({message: true, trans: data.data});
   } catch (error) {
-    console.log("error:", error);
+    console.log("error", error);
     done(error);
   }
 };

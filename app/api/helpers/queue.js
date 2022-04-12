@@ -2,17 +2,7 @@ const bull = require("bull");
 const { statementProcess } = require("../services/statement");
 // import {setQueues, BullAdapter} from 'bull-board';
 const opts = require("./redisConnection");
-const Pusher = require("pusher");
-
-let pusher = new Pusher({
-  appId: "1101809",
-  key: "ac404fe517d1f318787a",
-  secret: "f46ee64d56269e3cb8fb",
-  cluster: "ap2",
-  useTLS: true,
-});
-
-// https://optimalbits.github.io/bull
+const { pusher } = require("./../services/pusher");
 
 const queue = new bull("ocrQueue", opts);
 
@@ -47,13 +37,13 @@ queue.on("failed", async (job, error) => {
 
 const createJob = async (
   statementFileNames,
-  bankName,
+  bank,
   userId,
   token
 ) => {
   await queue.add({
     statementFileNames,
-    bankName,
+    bank,
     userId,
     token,
   });
