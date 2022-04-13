@@ -94,12 +94,28 @@ statementProcess = async (job, done) => {
     }
 
     // after loop validations
-    let numberOfMonths = 0;
-    dates.forEach(({firstDate, lastDate}) => {
-      const diff = lastDate.diff(firstDate, "months");
-      // also count if statement is of multiple months
-      numberOfMonths += diff === 0 ? 1 : diff;
-    })
+    // dates = [
+      // {
+      //   firstDate: moment("1 Feb 2020"),
+      //   lastDate: moment("22 Feb 2020")
+      // },
+      // {
+      //   firstDate: moment("1 Jan 2020"),
+      //   lastDate: moment("22 Jan 2020")
+      // },
+      // {
+      //   firstDate: moment("1 Mar 2020"),
+      //   lastDate: moment("22 Apr 2020")
+      // },
+    // ]
+
+    dates.sort((a,b) => a.firstDate.format('YYYYMMDD') - b.firstDate.format('YYYYMMDD'))
+
+    const firstDate = dates[0].firstDate;
+    const lastDate = dates[dates.length - 1].lastDate;
+
+    let numberOfMonths = Math.ceil(lastDate.diff(firstDate, "days") / 30.417);
+
     if(numberOfMonths < 3) {
       notifyStatus({
         status: "incomplete-statement",
@@ -115,6 +131,8 @@ statementProcess = async (job, done) => {
 
     console.log(numberOfMonths);
 
+    form.append("firstDate", firstDate.toISOString());
+    form.append("lastDate", lastDate.toISOString());
     form.append("token", token);
     form.append("userId", userId);
     form.append("bank", JSON.stringify(bank));
