@@ -25,7 +25,7 @@ const getFromText = (text, name) => {
 
 statementProcess = async (job, done) => {
   const { statementFileNames, bank, userId, token } = job.data;
-  const templateName = bank['SRKey'] || bank['name'];
+  const templateName = bank['SRKey'] || bank['displayName'] || bank['name'];
   const dates = [];
   try {
     let form = new FormData();
