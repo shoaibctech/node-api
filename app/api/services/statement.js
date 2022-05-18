@@ -48,15 +48,15 @@ statementProcess = async (job, done) => {
         result.match(new RegExp("accuracy" + "\\s(\\w+)"))[1]
       );
 
-      let error = result.includes("error");
+      let error = result.includes("error") ||  result.includes("Error");
 
-      // if (accuracy < 90 || error) {
-      //   return done({
-      //     code: "low-accuracy",
-      //     message: "Result is not accurate enough",
-      //     fileIndex: index
-      //   });
-      // }
+      if (accuracy < 80 || error) {
+        return done({
+          code: "low-accuracy",
+          message: "Result is not accurate enough",
+          fileIndex: index
+        });
+      }
 
       const text = await fsPromises.readFile(dirPath + fileNameWithOutExtension + '.txt', 'utf8');
       
