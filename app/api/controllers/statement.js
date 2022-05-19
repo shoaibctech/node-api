@@ -2,41 +2,31 @@ const { createJob } = require("../helpers/queue");
 const { uploadFile } = require("../helpers/statement");
 
 let dirPath = `C:/Users/Administrator/Downloads/`;
-// let dirPath = `/Users/macbook/lucie/`;
 
 module.exports = {
   upload: async (req, res, next) => {
     try {
-      const userId = req.body.userId;
-      const token = req.body.token;
       const bank = JSON.parse(req.body.bank);
-      let statementFile = req.files.file;
-      let statementFileNames = [];
-      let randomString;
+      const statementFiles = Array.isArray(req.files.file)
+        ? req.files.file
+        : [req.files.file];
+      const statementFileNames = [];
 
-      if (statementFile.constructor === Array) {
-        for (let index = 0; index < statementFile.length; index++) {
-          randomString = getRandomToken();
-          let statementFileName = `${randomString}${statementFile[index].name}`;
-
-          await uploadFile(
-            statementFile[index],
-            `${dirPath}${statementFileName}`
-          );
-          statementFileNames.push(statementFileName);
-        }
-      } else {
-        randomString = getRandomToken();
-        let statementFileName = `${randomString}${statementFile.name}`;
+      for (const statementFile of statementFiles) {
+        const randomString = getRandomToken();
+        const statementFileName = `${randomString}${statementFile.name}`;
 
         await uploadFile(statementFile, `${dirPath}${statementFileName}`);
-
         statementFileNames.push(statementFileName);
       }
 
-      await createJob(statementFileNames, bank, userId, token);
-
-      res.status(200).send({ message: true, trans: "data.data" });
+      const job = await createJob(statementFileNames, bank);
+      try {
+        const result = await job.finished();
+        res.json(result);
+      } catch (error) {
+        res.status(400).json({ success: false, message: error.message });
+      }
     } catch (e) {
       next(e);
     }

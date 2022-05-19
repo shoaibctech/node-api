@@ -2,33 +2,27 @@ const util = require("util");
 const moment = require("moment");
 const exec = util.promisify(require("child_process").exec);
 const path = require("path");
-let fs = require("fs");
-let FormData = require("form-data");
-const { uploadFile } = require("../helpers/statement");
-const { notifyFileStatus, pusher, notifyStatus } = require('./pusher');
-const axios = require("axios");
+const { notifyFileStatus, notifyStatus } = require("./pusher");
 const fsPromises = require("fs/promises");
 
 let parentDir = path.resolve(process.cwd(), "..");
 let dirPath = `C:/Users/Administrator/Downloads/`;
-// let dirPath = `/Users/macbook/lucie/`;
 
 const getFromText = (text, name) => {
-  let line = text.split('\n')
-    .filter(l => l.startsWith(name))
+  let line = text.split("\n").filter((l) => l.startsWith(name));
   line = line[0] ? line[0] : null;
 
-  if(!line) return;
+  if (!line) return;
 
   return line.split("=")[1].trim();
-}
+};
 
 statementProcess = async (job, done) => {
-  const { statementFileNames, bank, userId, token } = job.data;
-  const templateName = bank['SRKey'] || bank['displayName'] || bank['name'];
+  const { statementFileNames, bank } = job.data;
+  const templateName = bank["SRKey"] || bank["displayName"] || bank["name"];
   const dates = [];
+  const files = [];
   try {
-    let form = new FormData();
     for (let index = 0; index < statementFileNames.length; index++) {
       await notifyFileStatus("processing", index, job);
 
@@ -48,45 +42,49 @@ statementProcess = async (job, done) => {
         result.match(new RegExp("accuracy" + "\\s(\\w+)"))[1]
       );
 
-      let error = result.includes("error") ||  result.includes("Error");
+      let error = result.includes("error") || result.includes("Error");
 
       if (accuracy < 80 || error) {
         return done({
           code: "low-accuracy",
           message: "Result is not accurate enough",
-          fileIndex: index
+          fileIndex: index,
         });
       }
 
-      const text = await fsPromises.readFile(dirPath + fileNameWithOutExtension + '.txt', 'utf8');
-      
+      const text = await fsPromises.readFile(
+        dirPath + fileNameWithOutExtension + ".txt",
+        "utf8"
+      );
+
       const createDate = getFromText(text, "pdf_CreationDate");
       const modDate = getFromText(text, "pdf_ModDate");
 
-      if((createDate && modDate) && (createDate !== modDate)) {
+      if (createDate && modDate && createDate !== modDate) {
         return done({
           code: "wrong-dates",
-          fileIndex: index
+          fileIndex: index,
         });
       }
 
       const firstDate = getFromText(text, "First_date");
       const lastDate = getFromText(text, "Last_date");
-      
-      if(firstDate && lastDate) {
+
+      if (firstDate && lastDate) {
         dates.push({
           firstDate: moment(firstDate),
-          lastDate: moment(lastDate)
-        })
+          lastDate: moment(lastDate),
+        });
       }
 
-      console.log(createDate, modDate);
-
-      let csvStatement = fs.createReadStream(
-        `${dirPath}${fileNameWithOutExtension}.csv`
+      let csvStatement = await fsPromises.readFile(
+        `${dirPath}${fileNameWithOutExtension}.csv`,
+        "utf8"
       );
 
-      form.append("statement", csvStatement, `${fileNameWithOutExtension}.csv`);
+      files.push({
+        csv: csvStatement,
+      });
 
       await deleteFile(`${dirPath}${statementFileName}`);
 
@@ -95,32 +93,37 @@ statementProcess = async (job, done) => {
 
     // after loop validations
     // dates = [
-      // {
-      //   firstDate: moment("1 Feb 2020"),
-      //   lastDate: moment("22 Feb 2020")
-      // },
-      // {
-      //   firstDate: moment("1 Jan 2020"),
-      //   lastDate: moment("22 Jan 2020")
-      // },
-      // {
-      //   firstDate: moment("1 Mar 2020"),
-      //   lastDate: moment("22 Apr 2020")
-      // },
+    // {
+    //   firstDate: moment("1 Feb 2020"),
+    //   lastDate: moment("22 Feb 2020")
+    // },
+    // {
+    //   firstDate: moment("1 Jan 2020"),
+    //   lastDate: moment("22 Jan 2020")
+    // },
+    // {
+    //   firstDate: moment("1 Mar 2020"),
+    //   lastDate: moment("22 Apr 2020")
+    // },
     // ]
 
-    dates.sort((a,b) => a.firstDate.format('YYYYMMDD') - b.firstDate.format('YYYYMMDD'))
+    dates.sort(
+      (a, b) => a.firstDate.format("YYYYMMDD") - b.firstDate.format("YYYYMMDD")
+    );
 
     const firstDate = dates[0].firstDate;
     const lastDate = dates[dates.length - 1].lastDate;
 
     let numberOfMonths = Math.ceil(lastDate.diff(firstDate, "days") / 30.417);
 
-    if(numberOfMonths < 3) {
-      notifyStatus({
-        status: "incomplete-statement",
-        message: "Statement(s) doesn't contain data for minimum three months"
-      }, job);
+    if (numberOfMonths < 3) {
+      notifyStatus(
+        {
+          status: "incomplete-statement",
+          message: "Statement(s) doesn't contain data for minimum three months",
+        },
+        job
+      );
 
       // TODO: use this one in prod
       // return done({
@@ -129,30 +132,11 @@ statementProcess = async (job, done) => {
       // });
     }
 
-    console.log(numberOfMonths);
-
-    form.append("firstDate", firstDate.toISOString());
-    form.append("lastDate", lastDate.toISOString());
-    form.append("token", token);
-    form.append("userId", userId);
-    form.append("bank", JSON.stringify(bank));
-
-    try {
-      const result = await axios.post(
-        "https://beta-api.clearstake.com/api/statement/read",
-        form,
-        {
-          headers: form.getHeaders(),
-        }
-      );
-      console.log(result.data);
-      done();
-    } catch (error) {
-      console.log("error posting statement info", error);
-      return done({
-        code: "posting-failed"
-      });
-    }
+    done(null, {
+      files,
+      firstDate,
+      lastDate,
+    });
 
     // await deleteFile(`${dirPath}statement.csv`);
   } catch (error) {
