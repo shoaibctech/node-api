@@ -117,6 +117,7 @@ statementProcess = async (job, done) => {
     let numberOfMonths = Math.ceil(lastDate.diff(firstDate, "days") / 30.417);
 
     if (numberOfMonths < 3) {
+      // TODO: remove
       notifyStatus(
         {
           status: "incomplete-statement",
