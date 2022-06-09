@@ -6,6 +6,7 @@ let dirPath = `C:/Users/Administrator/Downloads/`;
 module.exports = {
   upload: async (req, res, next) => {
     try {
+      const token = req.body.token;
       const bank = JSON.parse(req.body.bank);
       const statementFiles = Array.isArray(req.files.file)
         ? req.files.file
@@ -20,7 +21,7 @@ module.exports = {
         statementFileNames.push(statementFileName);
       }
 
-      const job = await createJob(statementFileNames, bank);
+      const job = await createJob(statementFileNames, bank, token);
       try {
         const result = await job.finished();
         res.json(result);

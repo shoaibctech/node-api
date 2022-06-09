@@ -38,9 +38,10 @@ statementProcess = async (job, done) => {
       const result = await runCommand(command);
       console.log("_result", result);
 
-      let accuracy = parseInt(
-        result.match(new RegExp("accuracy" + "\\s(\\w+)"))[1]
+      const accuracyMatches = result.match(
+        new RegExp("accuracy" + "\\s(\\w+)")
       );
+      let accuracy = parseInt(accuracyMatches ? accuracyMatches[1] : 0);
 
       let error = result.includes("error") || result.includes("Error");
 

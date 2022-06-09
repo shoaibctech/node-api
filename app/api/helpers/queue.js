@@ -19,8 +19,8 @@ queue.on("completed", async (job, result) => {
     "processing-statement-complete",
     {
       status: "success",
-      statusCode: result?.code || "good",
-      message: result?.message || "Completed",
+      statusCode: result.code || "good",
+      message: result.message || "Completed",
       token: job.data.token,
       userId: job.data.userId,
     }
@@ -34,19 +34,20 @@ queue.on("failed", async (job, error) => {
     "processing-statement-complete",
     {
       status: "failed",
-      statusCode: error?.code || "server-error",
-      message: error?.message || "Something went wrong!",
+      statusCode: error.code || "server-error",
+      message: error.message || "Something went wrong!",
       token: job.data.token,
       userId: job.data.userId,
-      fileIndex: error?.fileIndex || -1,
+      fileIndex: error.fileIndex ?? -1,
     }
   );
 });
 
-const createJob = async (statementFileNames, bank) =>
+const createJob = async (statementFileNames, bank, token) =>
   await queue.add({
     statementFileNames,
     bank,
+    token,
   });
 
 module.exports = { createJob };
