@@ -38,14 +38,14 @@ statementProcess = async (job, done) => {
       const result = await runCommand(command);
       console.log("_result", result);
 
-      const accuracyMatches = result.match(
-        new RegExp("accuracy" + "\\s(\\w+)")
+      const accuracyMatches = result.match(new RegExp("accuracy" + "\\s(\\w+)"));
+      let accuracy = parseInt(
+        accuracyMatches ? accuracyMatches[1] : 0
       );
-      let accuracy = parseInt(accuracyMatches ? accuracyMatches[1] : 0);
 
       let error = result.includes("error") || result.includes("Error");
 
-      if (accuracy < 80 || error) {
+      if (accuracy < 50 || error) {
         return done({
           code: "low-accuracy",
           message: "Result is not accurate enough",
@@ -87,7 +87,7 @@ statementProcess = async (job, done) => {
         csv: csvStatement,
       });
 
-      await deleteFile(`${dirPath}${statementFileName}`);
+      // await deleteFile(`${dirPath}${statementFileName}`);
 
       await notifyFileStatus("completed", index, job);
     }
@@ -119,13 +119,13 @@ statementProcess = async (job, done) => {
 
     if (numberOfMonths < 3) {
       // TODO: remove
-      notifyStatus(
-        {
-          status: "incomplete-statement",
-          message: "Statement(s) doesn't contain data for minimum three months",
-        },
-        job
-      );
+      // notifyStatus(
+      //   {
+      //     status: "incomplete-statement",
+      //     message: "Statement(s) doesn't contain data for minimum three months",
+      //   },
+      //   job
+      // );
 
       // TODO: use this one in prod
       // return done({
@@ -138,7 +138,7 @@ statementProcess = async (job, done) => {
       files,
       firstDate,
       lastDate,
-    });
+    });   
 
     // await deleteFile(`${dirPath}statement.csv`);
   } catch (error) {
