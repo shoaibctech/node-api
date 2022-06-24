@@ -26,6 +26,7 @@ module.exports = {
         const result = await job.finished();
         res.json(result);
       } catch (error) {
+        console.log("error while processing job", error);
         res.status(400).json({ success: false, message: error.message });
       }
     } catch (e) {

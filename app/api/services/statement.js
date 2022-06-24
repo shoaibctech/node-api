@@ -38,13 +38,14 @@ statementProcess = async (job, done) => {
       const result = await runCommand(command);
       console.log("_result", result);
 
-      const accuracyMatches = result.match(new RegExp("accuracy" + "\\s(\\w+)"));
-      let accuracy = parseInt(
-        accuracyMatches ? accuracyMatches[1] : 0
+      const accuracyMatches = result.match(
+        new RegExp("accuracy" + "\\s(\\w+)")
       );
+      let accuracy = parseInt(accuracyMatches ? accuracyMatches[1] : 0);
 
       let error = result.includes("error") || result.includes("Error");
 
+      console.log(accuracy);
       if (accuracy < 50 || error) {
         return done({
           code: "low-accuracy",
@@ -126,7 +127,6 @@ statementProcess = async (job, done) => {
       //   },
       //   job
       // );
-
       // TODO: use this one in prod
       // return done({
       //   code: "not-complete",
@@ -138,7 +138,7 @@ statementProcess = async (job, done) => {
       files,
       firstDate,
       lastDate,
-    });   
+    });
 
     // await deleteFile(`${dirPath}statement.csv`);
   } catch (error) {
