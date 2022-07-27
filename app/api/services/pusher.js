@@ -26,9 +26,16 @@ const notifyStatus = async ({status, message}, {data}) => {
     });
 }
 
+const saveStatement = async (status, token) => {
+    return await pusher.trigger("affordability-channel", "save-statement", {
+        status: status,
+        token: token
+    });
+}
 
 module.exports = {
     pusher,
     notifyFileStatus,
-    notifyStatus
+    notifyStatus,
+    saveStatement
 }

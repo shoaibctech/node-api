@@ -28,7 +28,11 @@ queue.on("completed", async (job, result) => {
 });
 
 queue.on("failed", async (job, error) => {
+  console.log("::", error);
   // implement pusher
+  try {
+    
+  
   await pusher.trigger(
     "affordability-channel",
     "processing-statement-complete",
@@ -41,6 +45,9 @@ queue.on("failed", async (job, error) => {
       fileIndex: error.fileIndex ?? -1,
     }
   );
+} catch (error) {
+  console.log(":::", error);  
+}
 });
 
 const createJob = async (statementFileNames, bank, token) =>

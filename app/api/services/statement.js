@@ -62,9 +62,16 @@ statementProcess = async (job, done) => {
       const createDate = getFromText(text, "pdf_CreationDate");
       const modDate = getFromText(text, "pdf_ModDate");
 
-      if (createDate && modDate && createDate !== modDate) {
+      if (
+        createDate &&
+        createDate != "Null" &&
+        modDate &&
+        modDate != "Null" &&
+        createDate !== modDate
+      ) {
         return done({
           code: "wrong-dates",
+          message: "The creation and the modified dates are different",
           fileIndex: index,
         });
       }
