@@ -34,7 +34,7 @@ statementProcess = async (job, done) => {
 
       // const command1 = 'sr_api_call.exe --ip 127.0.0.1 --port 503 --version';
       const command = `sr_api_call.exe --ip 127.0.0.1 --port 503 --ocrflag 0 --upath ${statementFileName} --rtemplate UK::${templateName} --opath ${fileNameWithOutExtension}.csv`;
-
+      
       const result = await runCommand(command);
       console.log("_result", result);
 
@@ -46,7 +46,7 @@ statementProcess = async (job, done) => {
       let error = result.includes("error") || result.includes("Error");
 
       console.log(accuracy);
-      if (accuracy < 50 || error) {
+      if (accuracy < 80 || error) {
         return done({
           code: "low-accuracy",
           message: "Result is not accurate enough",
@@ -62,11 +62,11 @@ statementProcess = async (job, done) => {
       const createDate = getFromText(text, "pdf_CreationDate");
       const modDate = getFromText(text, "pdf_ModDate");
 
-      if (
+      if (false &&
         createDate &&
-        createDate != "Null" &&
+        createDate !== "Null" &&
         modDate &&
-        modDate != "Null" &&
+        modDate !== "Null" &&
         createDate !== modDate
       ) {
         return done({
@@ -93,6 +93,7 @@ statementProcess = async (job, done) => {
 
       files.push({
         csv: csvStatement,
+        metaData: text,
       });
 
       // await deleteFile(`${dirPath}${statementFileName}`);

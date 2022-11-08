@@ -1,4 +1,5 @@
 const Pusher = require("pusher");
+const appSync = require("./appsync");
 
 let pusher = new Pusher({
   appId: "1101809",
@@ -8,34 +9,59 @@ let pusher = new Pusher({
   useTLS: true,
 });
 
-const notifyFileStatus = async (status, index, {data}) => {
-    return await pusher.trigger("affordability-channel", "processing-statement", {
-        status: status,
-        token: data.token,
-        userId: data.userId,
-        fileIndex: index,
-    });
-}
+const notifyFileStatus = async (status, index, { data }) => {
+  appSync.publish(
+    "processing-statement",
+    JSON.stringify({
+      status: status,
+      token: data.token,
+      userId: data.userId,
+      fileIndex: index,
+    })
+  );
+  return await pusher.trigger("affordability-channel", "processing-statement", {
+    status: status,
+    token: data.token,
+    userId: data.userId,
+    fileIndex: index,
+  });
+};
 
-const notifyStatus = async ({status, message}, {data}) => {
-    return await pusher.trigger("affordability-channel", "processing-statement", {
-        status: status,
-        message: message,
-        token: data.token,
-        userId: data.userId
-    });
-}
+const notifyStatus = async ({ status, message }, { data }) => {
+  appSync.publish(
+    "processing-statement",
+    JSON.stringify({
+      status: status,
+      message: message,
+      token: data.token,
+      userId: data.userId,
+    })
+  );
+  return await pusher.trigger("affordability-channel", "processing-statement", {
+    status: status,
+    message: message,
+    token: data.token,
+    userId: data.userId,
+  });
+};
 
 const saveStatement = async (status, token) => {
-    return await pusher.trigger("affordability-channel", "save-statement", {
-        status: status,
-        token: token
-    });
-}
+  appSync.publish(
+    "save-statement",
+    JSON.stringify({
+      status: status,
+      token: token,
+    })
+  );
+  return await pusher.trigger("affordability-channel", "save-statement", {
+    status: status,
+    token: token,
+  });
+};
 
 module.exports = {
-    pusher,
-    notifyFileStatus,
-    notifyStatus,
-    saveStatement
-}
+  pusher,
+  notifyFileStatus,
+  notifyStatus,
+  saveStatement,
+};

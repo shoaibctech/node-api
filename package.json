@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@aws-amplify/api": "^4.0.52",
     "axios": "^0.24.0",
     "body-parser": "^1.19.0",
     "bull": "^4.2.0",

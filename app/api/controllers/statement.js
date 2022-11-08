@@ -46,12 +46,18 @@ module.exports = {
       const statementFileNames = [];
 
       for (const statementFile of statementFiles) {
-        const randomString = getRandomToken();
-        const statementFileName = `${randomString}${statementFile.name}`;
+        // no empty files allowed
+        if (statementFile.size > 0) {
+          const randomString = getRandomToken();
+          const statementFileName = `${randomString}${statementFile.name}`;
 
-        await uploadFile(statementFile, `${dirPath}${statementFileName}`);
-        statementFileNames.push(statementFileName);
+          await uploadFile(statementFile, `${dirPath}${statementFileName}`);
+          statementFileNames.push(statementFileName);
+        }
       }
+
+      if (statementFileNames.length < 1)
+        throw new Error("No file(s) or empty file(s) were provided");
 
       const job = await createJob(statementFileNames, bank, token);
       try {

@@ -3,11 +3,15 @@ const logger = require("morgan");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const fileUpload = require("express-fileupload");
+const Amplify = require("@aws-amplify/core").default;
+const appSync = require("./app/api/services/appsync");
 
 require("dotenv").config();
 
 const app = express();
 const PORT = process.env.PORT || 8080;
+
+Amplify.configure(appSync.config);
 
 app.use(logger("dev"));
 app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
